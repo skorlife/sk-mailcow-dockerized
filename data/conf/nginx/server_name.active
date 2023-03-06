@@ -1,0 +1,1 @@
+server_name mail.skorlife.org autodiscover.* autoconfig.* ;

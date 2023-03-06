@@ -656,7 +656,7 @@
         "awaiting_tfa_confirmation": "В очікуванні підтвердження TFA"
     },
     "login": {
-        "fido2_webauthn": "FIDO2/WebAuthn Login",
+        "fido2_webauthn": "FIDO2/WebAuthn",
         "login": "Увійти",
         "other_logins": "Вхід за допомогою ключа",
         "password": "Пароль",

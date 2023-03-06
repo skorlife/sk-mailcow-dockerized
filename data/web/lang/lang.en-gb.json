@@ -710,7 +710,7 @@
     },
     "login": {
         "delayed": "Login was delayed by %s seconds.",
-        "fido2_webauthn": "FIDO2/WebAuthn Login",
+        "fido2_webauthn": "FIDO2/WebAuthn",
         "login": "Login",
         "mobileconfig_info": "Please login as mailbox user to download the requested Apple connection profile.",
         "other_logins": "Key login",

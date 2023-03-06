@@ -2,12 +2,9 @@
 # renovate: datasource=github-releases depName=nextcloud/server versioning=semver extractVersion=^v(?<version>.*)$
 NEXTCLOUD_VERSION=25.0.3
 
-echo -ne "Checking prerequisites..."
-sleep 1
-for bin in curl dirmngr tar bzip2; do
-  if [[ -z $(which ${bin}) ]]; then echo -ne "\r\033[31mCannot find ${bin}, exiting...\033[0m\n"; exit 1; fi
+for bin in curl dirmngr; do
+  if [[ -z $(which ${bin}) ]]; then echo "Cannot find ${bin}, exiting..."; exit 1; fi
 done
-echo -ne "\r\033[32mFound all prerequisites! Continuing...\033[0m\n"
 
 [[ -z ${1} ]] && NC_HELP=y
 
@@ -218,4 +215,5 @@ elif [[ ${NC_RESETPW} == "y" ]]; then
       read -p "Enter the username: " NC_USER
     done
     docker exec -it -u www-data $(docker ps -f name=php-fpm-mailcow -q) /web/nextcloud/occ user:resetpassword ${NC_USER}
+
 fi

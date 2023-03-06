@@ -8,7 +8,7 @@ services:
       volumes:
         - ./data/hooks/unbound:/hooks:Z
         - ./data/conf/unbound/unbound.conf:/etc/unbound/unbound.conf:ro,Z
-      restart: always
+      restart: "no"
       tty: true
       networks:
         mailcow-network:
@@ -22,8 +22,8 @@ services:
         - unbound-mailcow
       stop_grace_period: 45s
       volumes:
-        - mysql-vol-1:/var/lib/mysql/
-        - mysql-socket-vol-1:/var/run/mysqld/
+        - /opt/efs/mysql-vol-1:/var/lib/mysql/
+        - /opt/efs/mysql-socket-vol-1:/var/run/mysqld/
         - ./data/conf/mysql/:/etc/mysql/conf.d/:ro,Z
       environment:
         - TZ=${TZ}
@@ -32,7 +32,7 @@ services:
         - MYSQL_USER=${DBUSER}
         - MYSQL_PASSWORD=${DBPASS}
         - MYSQL_INITDB_SKIP_TZINFO=1
-      restart: always
+      restart: "no"
       ports:
         - "${SQL_PORT:-127.0.0.1:13306}:3306"
       networks:
@@ -43,8 +43,8 @@ services:
     redis-mailcow:
       image: redis:7-alpine
       volumes:
-        - redis-vol-1:/data/
-      restart: always
+        - /opt/efs/redis-vol-1:/data/
+      restart: "no"
       ports:
         - "${REDIS_PORT:-127.0.0.1:7654}:6379"
       environment:
@@ -58,8 +58,8 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.61
-      restart: always
+      image: mailcow/clamd:1.60
+      restart: "no"
       depends_on:
         - unbound-mailcow
       dns:
@@ -69,7 +69,7 @@ services:
         - SKIP_CLAMD=${SKIP_CLAMD:-n}
       volumes:
         - ./data/conf/clamav/:/etc/clamav/:Z
-        - clamd-db-vol-1:/var/lib/clamav
+        - /opt/efs/clamd-db-vol-1:/var/lib/clamav
       networks:
         mailcow-network:
           aliases:
@@ -95,8 +95,8 @@ services:
         - ./data/conf/rspamd/lua/:/etc/rspamd/lua/:ro,Z
         - ./data/conf/rspamd/rspamd.conf.local:/etc/rspamd/rspamd.conf.local:Z
         - ./data/conf/rspamd/rspamd.conf.override:/etc/rspamd/rspamd.conf.override:Z
-        - rspamd-vol-1:/var/lib/rspamd
-      restart: always
+        - /opt/efs/rspamd-vol-1:/var/lib/rspamd
+      restart: "no"
       hostname: rspamd
       dns:
         - ${IPV4_NETWORK:-172.22.1}.254
@@ -115,8 +115,8 @@ services:
         - ./data/web:/web:z
         - ./data/conf/rspamd/dynmaps:/dynmaps:ro,z
         - ./data/conf/rspamd/custom/:/rspamd_custom_maps:z
-        - rspamd-vol-1:/var/lib/rspamd
-        - mysql-socket-vol-1:/var/run/mysqld/
+        - /opt/efs/rspamd-vol-1:/var/lib/rspamd
+        - /opt/efs/mysql-socket-vol-1:/var/run/mysqld/
         - ./data/conf/sogo/:/etc/sogo/:z
         - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro,z
         - ./data/conf/phpfpm/sogo-sso/:/etc/sogo-sso/:z
@@ -162,7 +162,7 @@ services:
         - DEV_MODE=${DEV_MODE:-n}
         - DEMO_MODE=${DEMO_MODE:-n}
         - WEBAUTHN_ONLY_TRUSTED_VENDORS=${WEBAUTHN_ONLY_TRUSTED_VENDORS:-n}
-      restart: always
+      restart: "no"
       networks:
         mailcow-network:
           aliases:
@@ -195,9 +195,9 @@ services:
         - ./data/conf/sogo/custom-favicon.ico:/usr/lib/GNUstep/SOGo/WebServerResources/img/sogo.ico:z
         - ./data/conf/sogo/custom-theme.js:/usr/lib/GNUstep/SOGo/WebServerResources/js/theme.js:z
         - ./data/conf/sogo/custom-sogo.js:/usr/lib/GNUstep/SOGo/WebServerResources/js/custom-sogo.js:z
-        - mysql-socket-vol-1:/var/run/mysqld/
-        - sogo-web-vol-1:/sogo_web
-        - sogo-userdata-backup-vol-1:/sogo_backup
+        - /opt/efs/mysql-socket-vol-1:/var/run/mysqld/
+        - /opt/efs/sogo-web-vol-1:/sogo_web
+        - /opt/efs/sogo-userdata-backup-vol-1:/sogo_backup
       labels:
         ofelia.enabled: "true"
         ofelia.job-exec.sogo_sessions.schedule: "@every 1m"
@@ -208,7 +208,7 @@ services:
         ofelia.job-exec.sogo_eautoreply.command: "/bin/bash -c \"[[ $${MASTER} == y ]] && /usr/local/bin/gosu sogo /usr/sbin/sogo-tool update-autoreply -p /etc/sogo/sieve.creds || exit 0\""
         ofelia.job-exec.sogo_backup.schedule: "@every 24h"
         ofelia.job-exec.sogo_backup.command: "/bin/bash -c \"[[ $${MASTER} == y ]] && /usr/local/bin/gosu sogo /usr/sbin/sogo-tool backup /sogo_backup ALL || exit 0\""
-      restart: always
+      restart: "no"
       networks:
         mailcow-network:
           ipv4_address: ${IPV4_NETWORK:-172.22.1}.248
@@ -229,13 +229,13 @@ services:
         - ./data/assets/ssl:/etc/ssl/mail/:ro,z
         - ./data/conf/sogo/:/etc/sogo/:z
         - ./data/conf/phpfpm/sogo-sso/:/etc/phpfpm/:z
-        - vmail-vol-1:/var/vmail
-        - vmail-index-vol-1:/var/vmail_index
-        - crypt-vol-1:/mail_crypt/
+        - /opt/efs/vmail-vol-1:/var/vmail
+        - /opt/efs/vmail-index-vol-1:/var/vmail_index
+        - /opt/efs/crypt-vol-1:/mail_crypt/
         - ./data/conf/rspamd/custom/:/etc/rspamd/custom:z
         - ./data/assets/templates:/templates:z
-        - rspamd-vol-1:/var/lib/rspamd
-        - mysql-socket-vol-1:/var/run/mysqld/
+        - /opt/efs/rspamd-vol-1:/var/lib/rspamd
+        - /opt/efs/mysql-socket-vol-1:/var/run/mysqld/
       environment:
         - DOVECOT_MASTER_USER=${DOVECOT_MASTER_USER:-}
         - DOVECOT_MASTER_PASS=${DOVECOT_MASTER_PASS:-}
@@ -263,7 +263,7 @@ services:
         - "${POP_PORT:-110}:110"
         - "${POPS_PORT:-995}:995"
         - "${SIEVE_PORT:-4190}:4190"
-      restart: always
+      restart: "no"
       tty: true
       labels:
         ofelia.enabled: "true"
@@ -303,10 +303,10 @@ services:
         - ./data/hooks/postfix:/hooks:Z
         - ./data/conf/postfix:/opt/postfix/conf:z
         - ./data/assets/ssl:/etc/ssl/mail/:ro,z
-        - postfix-vol-1:/var/spool/postfix
-        - crypt-vol-1:/var/lib/zeyple
-        - rspamd-vol-1:/var/lib/rspamd
-        - mysql-socket-vol-1:/var/run/mysqld/
+        - /opt/efs/postfix-vol-1:/var/spool/postfix
+        - /opt/efs/crypt-vol-1:/var/lib/zeyple
+        - /opt/efs/rspamd-vol-1:/var/lib/rspamd
+        - /opt/efs/mysql-socket-vol-1:/var/run/mysqld/
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - TZ=${TZ}
@@ -322,7 +322,7 @@ services:
         - "${SMTP_PORT:-25}:25"
         - "${SMTPS_PORT:-465}:465"
         - "${SUBMISSION_PORT:-587}:587"
-      restart: always
+      restart: "no"
       dns:
         - ${IPV4_NETWORK:-172.22.1}.254
       networks:
@@ -333,7 +333,7 @@ services:
 
     memcached-mailcow:
       image: memcached:alpine
-      restart: always
+      restart: "no"
       environment:
         - TZ=${TZ}
       networks:
@@ -376,11 +376,11 @@ services:
         - ./data/assets/ssl/:/etc/ssl/mail/:ro,z
         - ./data/conf/nginx/:/etc/nginx/conf.d/:z
         - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro,z
-        - sogo-web-vol-1:/usr/lib/GNUstep/SOGo/
+        - /opt/efs/sogo-web-vol-1:/usr/lib/GNUstep/SOGo/
       ports:
         - "${HTTPS_BIND:-}:${HTTPS_PORT:-443}:${HTTPS_PORT:-443}"
         - "${HTTP_BIND:-}:${HTTP_PORT:-80}:${HTTP_PORT:-80}"
-      restart: always
+      restart: "no"
       networks:
         mailcow-network:
           aliases:
@@ -417,15 +417,15 @@ services:
         - ./data/web/.well-known/acme-challenge:/var/www/acme:z
         - ./data/assets/ssl:/var/lib/acme/:z
         - ./data/assets/ssl-example:/var/lib/ssl-example/:ro,Z
-        - mysql-socket-vol-1:/var/run/mysqld/
-      restart: always
+        - /opt/efs/mysql-socket-vol-1:/var/run/mysqld/
+      restart: "no"
       networks:
         mailcow-network:
           aliases:
             - acme
 
     netfilter-mailcow:
-      image: mailcow/netfilter:1.51
+      image: mailcow/netfilter:1.50
       stop_grace_period: 30s
       depends_on:
         - dovecot-mailcow
@@ -433,7 +433,7 @@ services:
         - sogo-mailcow
         - php-fpm-mailcow
         - redis-mailcow
-      restart: always
+      restart: "no"
       privileged: true
       environment:
         - TZ=${TZ}
@@ -454,11 +454,11 @@ services:
       tmpfs:
         - /tmp
       volumes:
-        - rspamd-vol-1:/var/lib/rspamd
-        - mysql-socket-vol-1:/var/run/mysqld/
-        - postfix-vol-1:/var/spool/postfix
+        - /opt/efs/rspamd-vol-1:/var/lib/rspamd
+        - /opt/efs/mysql-socket-vol-1:/var/run/mysqld/
+        - /opt/efs/postfix-vol-1:/var/spool/postfix
         - ./data/assets/ssl:/etc/ssl/mail/:ro,z
-      restart: always
+      restart: "no"
       environment:
         - IPV6_NETWORK=${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
         - LOG_LINES=${LOG_LINES:-9999}
@@ -513,7 +513,7 @@ services:
       image: mailcow/dockerapi:2.01
       security_opt:
         - label=disable
-      restart: always
+      restart: "no"
       dns:
         - ${IPV4_NETWORK:-172.22.1}.254
       environment:
@@ -530,9 +530,9 @@ services:
 
     solr-mailcow:
       image: mailcow/solr:1.8.1
-      restart: always
+      restart: "no"
       volumes:
-        - solr-vol-1:/opt/solr/server/solr/dovecot-fts/data
+        - /opt/efs/solr-vol-1:/opt/solr/server/solr/dovecot-fts/data
       ports:
         - "${SOLR_PORT:-127.0.0.1:18983}:8983"
       environment:
@@ -546,7 +546,7 @@ services:
 
     olefy-mailcow:
       image: mailcow/olefy:1.11
-      restart: always
+      restart: "no"
       environment:
         - TZ=${TZ}
         - OLEFY_BINDADDRESS=0.0.0.0
@@ -564,7 +564,7 @@ services:
 
     ofelia-mailcow:
       image: mcuadros/ofelia:latest
-      restart: always
+      restart: "no"
       command: daemon --docker
       environment:
         - TZ=${TZ}
@@ -605,7 +605,7 @@ services:
       image: robbertkl/ipv6nat
       security_opt:
         - label=disable
-      restart: always
+      restart: "no"
       privileged: true
       network_mode: "host"
       volumes:
